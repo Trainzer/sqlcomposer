@@ -30,8 +30,7 @@ func (sq *sqlcomposer) getNewParam() string {
 
 // Add parameter to query
 func (sq *sqlcomposer) AddParam(in interface{}) string {
-	if in == nil { //if in == nil || (reflect.ValueOf(in).Kind() == reflect.Ptr && reflect.ValueOf(in).IsNil())
-		//reflect.Ptr(reflect.ValueOf(c)) && reflect.ValueOf(c).Elem().IsNil() ???
+	if in == nil {
 		return SQLNullValue
 	}
 
@@ -73,4 +72,32 @@ func (sq *sqlcomposer) AddArrayParam(in interface{}) string {
 	default:
 		return SQLNullValue
 	}
+}
+
+func (sq *sqlcomposer) Ife(condition bool, ifTrue, ifFalse string) string {
+	if condition {
+		return ifTrue
+	}
+	return ifFalse
+}
+
+func (sq *sqlcomposer) If(condition bool, ifTrue string) string {
+	if condition {
+		return ifTrue
+	}
+	return ""
+}
+
+func (sq *sqlcomposer) IfeF(condition bool, ifTrue, ifFalse func() string) string {
+	if condition {
+		return ifTrue()
+	}
+	return ifFalse()
+}
+
+func (sq *sqlcomposer) IfF(condition bool, ifTrue func() string) string {
+	if condition {
+		return ifTrue()
+	}
+	return ""
 }
