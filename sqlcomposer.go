@@ -1,6 +1,14 @@
 package sqlcomposer
 
-import "strconv"
+import (
+	"reflect"
+	"strconv"
+	"strings"
+)
+
+const (
+	SQLNullValue = "NULL"
+)
 
 type sqlcomposer struct {
 	paramCounter int
@@ -20,13 +28,49 @@ func (sq *sqlcomposer) getNewParam() string {
 	return "$" + strconv.Itoa(sq.paramCounter)
 }
 
+// Add parameter to query
 func (sq *sqlcomposer) AddParam(in interface{}) string {
 	if in == nil { //if in == nil || (reflect.ValueOf(in).Kind() == reflect.Ptr && reflect.ValueOf(in).IsNil())
 		//reflect.Ptr(reflect.ValueOf(c)) && reflect.ValueOf(c).Elem().IsNil() ???
-		return "NULL"
+		return SQLNullValue
 	}
 
 	sq.paramList = append(sq.paramList, in)
 
 	return sq.getNewParam()
+}
+
+// If isNull, write NULL value
+func (sq *sqlcomposer) AddNullableParam(in interface{}, isNull bool) string {
+	if isNull {
+		return SQLNullValue
+	}
+
+	sq.paramList = append(sq.paramList, in)
+
+	return sq.getNewParam()
+}
+
+// Expand array to variable list. See test for package
+func (sq *sqlcomposer) AddArrayParam(in interface{}) string {
+	s := reflect.ValueOf(in)
+	switch s.Kind() {
+	case reflect.Slice, reflect.Array:
+		if s.Len() == 0 {
+			return SQLNullValue
+		}
+
+		s := reflect.ValueOf(in)
+		sb := strings.Builder{}
+
+		for i := 0; i < s.Len(); i++ {
+			if i > 0 {
+				sb.WriteRune(rune(','))
+			}
+			sb.WriteString(sq.AddParam(s.Index(i).Interface()))
+		}
+		return sb.String()
+	default:
+		return SQLNullValue
+	}
 }

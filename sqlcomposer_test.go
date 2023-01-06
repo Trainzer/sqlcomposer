@@ -40,4 +40,38 @@ func TestAddParam(t *testing.T) {
 		assert.Equal(t, sqlExpected, sql)
 		assert.Equal(t, paramsExpected, sqc.GetParams())
 	})
+
+	t.Run("AddArrayParam", func(t *testing.T) {
+		t.Parallel()
+
+		arrayParams := []int{1, 2, 3}
+
+		sqlExpected := "update users set facebook = NULL where id in array[$1,$2,$3]"
+		paramsExpected := []interface{}{1, 2, 3}
+
+		sqc := sqlcomposer.NewSqlComposer()
+		sql := "update users set facebook = NULL where id in array[" + sqc.AddArrayParam(arrayParams) + "]"
+
+		assert.Equal(t, sqlExpected, sql)
+		assert.Equal(t, paramsExpected, sqc.GetParams())
+	})
+
+	t.Run("AddNullableParam", func(t *testing.T) {
+		t.Parallel()
+
+		id := 1
+		facebook := ""
+		email := "a@b.c"
+
+		sqlExpected := "update users set facebook = NULL, email = $1 where id = $2"
+		paramsExpected := []interface{}{email, id}
+
+		sqc := sqlcomposer.NewSqlComposer()
+		sql := "update users set facebook = " + sqc.AddNullableParam(facebook, facebook == "") + ", email = " + sqc.AddNullableParam(email, email == "") + " where id = " + sqc.AddParam(id)
+
+		assert.Equal(t, sqlExpected, sql)
+		assert.Equal(t, paramsExpected, sqc.GetParams())
+	})
+
+	t.Run("", func(t *testing.T) { t.Parallel() })
 }
